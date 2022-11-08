@@ -18,43 +18,39 @@ import br.com.springboot.springsecurity.model.Usuario;
 import br.com.springboot.springsecurity.repository.UsuarioRepository;
 
 @RestController
-@RequestMapping("/api/usuario")
+@RequestMapping("/api/usuarios")
 public class UsuarioController {
 
     @Autowired
-    private final UsuarioRepository repository;
+    private UsuarioRepository repository;
 
     private final PasswordEncoder encoder;
 
-    public UsuarioController(UsuarioRepository repository, PasswordEncoder encoder) {
-        this.repository = repository;
+    public UsuarioController(PasswordEncoder encoder) {
         this.encoder = encoder;
     }
-    
+
     @GetMapping("/listar-todos")
     public ResponseEntity<List<Usuario>> listarTodos() {
         return ResponseEntity.ok(repository.findAll());
     }
 
-    @PostMapping("/salvar")
-    public ResponseEntity<Usuario> salvar(@RequestBody Usuario usuario) {
+    @PostMapping("/cadastrar-usuario")
+    public ResponseEntity<Usuario> cadastrarUsuario(@RequestBody Usuario usuario) {
         usuario.setPassword(encoder.encode(usuario.getPassword()));
         return ResponseEntity.ok(repository.save(usuario));
     }
 
     @GetMapping("/validar-senha")
-    public ResponseEntity<Boolean> validarSenha(@RequestParam String login, @RequestParam String password) {
+    public ResponseEntity<Boolean> validarSenha(@RequestParam String login,
+            @RequestParam String password) {
         Optional<Usuario> optUsuario = repository.findByLogin(login);
-
-        if (Optional.empty() == null) {
+        if (optUsuario.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
         }
-
         Usuario usuario = optUsuario.get();
         boolean valid = encoder.matches(password, usuario.getPassword());
-
         HttpStatus status = (valid) ? HttpStatus.OK : HttpStatus.UNAUTHORIZED;
-
         return ResponseEntity.status(status).body(valid);
     }
 }
